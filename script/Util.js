@@ -156,20 +156,25 @@ var Util = {
             var last = -1;
             var l = 0;
             for (var c = 0; c < m[r].length; c++) {
-                if(m[r][c] == 2 && last == -1 || last == m[r][c]){
+                if(m[r][c] == 2)// && (last == -1 || last == m[r][c]))
+                {
                     l++;
                 }
-                else{
-                    l = 0;
+                else{                    
                     if(last == 2)
                     {
                         objs.push({x:c-l,y:r,w:l});
                     }
+                    l = 0;
                 }
 
                 last = m[r][c];
             }
         }
+        if(l>0){
+            objs.push({x:c-l,y:r-1,w:l});
+        }
+        //console.table(objs);
         return objs;
     },
     Unpack: function(zip){

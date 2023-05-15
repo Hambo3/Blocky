@@ -9,7 +9,7 @@ class Blocky{
 
         // Gravity
         this.mGravity = new Vector2(0, 100);
-        this.blocks = Util.UnpackWorldObjects(MAP.mapData);
+
         this.plr = new Player( Input,
                 new Vector2(12.5*32, 6*32), 32, 32, 2, 0, 0, "BOB");
         this.gameObjects.Add(this.plr);
@@ -21,6 +21,8 @@ class Blocky{
         this.gameObjects.Add(new Rectangle(C.ASSETS.WALL, 'brick10v', 
             new Vector2((37*32)+4, 12*32), 8, 24*32, 0, 0.2, .2, "WR"));
         
+        this.blocks = Util.UnpackWorldObjects(MAP.mapData);
+
         this.editor = new Editor(canvas, this.gameObjects);        
     }
 
