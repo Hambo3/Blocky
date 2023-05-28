@@ -159,31 +159,38 @@ class RigidShape{
                 ];
         this.collisionInfo = [];
         PHYSICS.computeRectNormals(this);
+
+        this.frame = 0; 
     }
 
     Update(dt)
     {   
-        
+
+    }
+
+    get Body() {
+        return SPRITES.Get(this.body, this.frame);
     }
 
     Render(x, y)
     {
-        GFX.Sprite(this.C.x-x, this.C.y-y, this.src, this.size, this.G);
+        GFX.Sprite(this.C.x-x, this.C.y-y, this.Body, this.size, this.G);
     }
 }
 
 class Circle extends RigidShape{
 
-    constructor(type, body, center, radius, mass, friction, restitution, id)
+    constructor(type, sprId, center, radius, mass, friction, restitution, isStatic)
     {        
         super(center, mass, friction, restitution, 0 ,radius);
         this.enabled = 1;
-        this.bodySrc = body;
-        this.src = SPRITES.Get(body, 0);
         this.size = 1;
         this.type = type;
         this.hits = null;//[C.ASSETS.GROUND,C.ASSETS.WALL,C.ASSETS.BLOCK];
-        this.id = id;
+        this.isStatic = isStatic;
+
+        this.spriteId = sprId;
+        this.body = GAMEOBJ.find(o=>o.id == sprId).src;
     }
 
     Update(dt)
@@ -194,21 +201,48 @@ class Circle extends RigidShape{
     Render(x,y)
     {
         super.Render(x, y);
+        //GFX.Sprite(this.C.x-x, this.C.y-y, this.src, this.size, this.G);
+    }
+}
+
+class StaticBody extends RigidShape{
+
+    constructor(tiles, type, center, width, height, mass, friction, restitution, isStatic)
+    {        
+        super(center, mass, friction, restitution, 1, Math.hypot(width, height)/2, width, height);
+        this.enabled = 1;
+        this.size = 1;
+        this.type = type;
+        this.hits = null;
+        this.isStatic = isStatic;
+        this.tiles = tiles;
+    }
+
+    Update(dt)
+    {
+    }
+
+    Render(x,y)
+    {
+        //super.Render(x, y);
+        //GFX.Sprite(this.C.x-x, this.C.y-y, this.src, this.size, this.G);
     }
 }
 
 class Rectangle extends RigidShape{
 
-    constructor(type, body, center, width, height, mass, friction, restitution, id)
+    constructor(type, sprId, center, width, height, mass, friction, restitution, isStatic)
     {        
         super(center, mass, friction, restitution, 1, Math.hypot(width, height)/2, width, height);
-        this.enabled = 1;
-        this.bodySrc = body;
-        this.src = SPRITES.Get(body, 0);
+        this.enabled = 1;        
+        
         this.size = 1;
         this.type = type;
         this.hits = null;
-        this.id = id;
+        this.isStatic = isStatic;
+        this.spriteId = sprId;
+        this.body = GAMEOBJ.find(o=>o.id == sprId).src;
+        //this.src = SPRITES.Get(s.src, 0);
     }
 
     Update(dt)
@@ -218,19 +252,22 @@ class Rectangle extends RigidShape{
     Render(x,y)
     {
         super.Render(x, y);
+        //GFX.Sprite(this.C.x-x, this.C.y-y, this.src, this.size, this.G);
     }
 }
 
 class Player extends Rectangle{
 
-    constructor(input, center, width, height, mass, friction, restitution, id)
+    constructor(input, center, width, height, mass, friction, restitution)
     {        
-        super(C.ASSETS.PLAYER, 'player', center, width, height, mass, friction, restitution, 1);
+        super(C.ASSETS.PLAYER, 3, center, width, height, mass, friction, restitution, 1);
         this.size = 1;
         this.hits = null;
         this.ignore = [C.ASSETS.SHOT];
-        this.id = id;
         this.input = input;
+        this.isStatic = 0;   
+        this.anim = new Anim(16, 2);    
+
     }
 
     Update(dt)
@@ -243,6 +280,8 @@ class Player extends Rectangle{
                 else{
                     this.V.x +=2;
                 } 
+
+                this.frame = this.anim.Next(this.frame);
             }
             else{
                 this.V.x *=0.8;
@@ -271,19 +310,21 @@ class Player extends Rectangle{
 
     Render(x,y)
     {
+        DEBUG.Print("Velocity X:",this.V.x);
+        DEBUG.Print("Velocity Y:",this.V.y);
         super.Render(x,y);
     }
 }
 
 class Shot extends Circle{
 
-    constructor( center, id)
+    constructor( center)
     {        
-        super(C.ASSETS.SHOT, 'ball16', center, 8, 6, 0.8, 0.8, 1);
+        super(C.ASSETS.SHOT, 10, center, 8, 6, 0.8, 0.8, 1);
         this.size = 1;
         this.hits = null;
         this.ignore = null;
-        this.id = id;
+        this.isStatic = 0;
     }
 
     Update(dt)

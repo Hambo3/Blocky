@@ -2,7 +2,7 @@ class MapManger{
 
     constructor(ctx, md, b){
         this.mapData = Util.UnpackMap(md.data);
-
+        
         this.offset = new Vector2();
         this.planSize = new Vector2(md.size.world.width, md.size.world.height);
         this.mapSize = new Vector2(md.size.world.width, md.size.world.height);
@@ -22,8 +22,8 @@ class MapManger{
         this.tileCanvas = Util.Context(this.mapSize.x, this.mapSize.y);
         this.osCanvas = Util.Context(this.mapSize.x, this.mapSize.y);
 
-        this.screenCtx.imageSmoothingEnabled = true;        
-        this.osCanvas.imageSmoothingEnabled = true;
+        this.screenCtx.imageSmoothingEnabled = false;        
+        this.osCanvas.imageSmoothingEnabled = false;
         this.rend = new Render(this.tileCanvas.ctx);
     }
 
@@ -35,11 +35,10 @@ class MapManger{
     }
     
     TileInit(){
-        var bx = ["#999","#333","#555","#777"];
         var p;
         var col = this.planSize.x;
         var row = this.planSize.y;
-        var h = this.tileSize/2;
+
         try {
             for(var r = 0; r < row; r++) 
             {
@@ -47,11 +46,19 @@ class MapManger{
                 {
                     p = this.mapData[r][c];
                     var pt = new Vector2(c * this.tileSize, r * this.tileSize);   
-                    this.rend.Box(pt.x, pt.y,32,32,bx[p]);
+
+                    var s = GAMEOBJ.find(o=>o.id == p);
+                    //var s = GAMEOBJ[p];
+                    if(s.col){
+                        this.rend.Box(pt.x, pt.y,32,32,s.col);
+                    }
+                    else{
+                        this.rend.Sprite(pt.x+16, pt.y+16, SPRITES.Get(s.src, 0), 1, 0);
+                    }
                 }
             }            
         } catch (error) {
-            console.log("r:"+r+ " c:"+c);
+            //console.log("r:"+r+ " c:"+c);
         }
 
     }

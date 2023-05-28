@@ -1,62 +1,77 @@
 class Editor{
 
-    constructor(canvas, pool)
+    constructor(canvas, pool, objects)
     {
         this.gameObjects = pool; 
 
         this.offset = {x:0,y:0};
 
         this.selected = {
-            index:0,
+            index:4,
             x:100,
             y:100,
-            src:SPRITES.Get(GAMEOBJ[0].src, 0),
-            mass:GAMEOBJ[0].d,
-            fric:GAMEOBJ[0].f,
-            rest:GAMEOBJ[0].r
+            r:0,
+            obj:GAMEOBJ[4],
+            src:SPRITES.Get(GAMEOBJ[4].src, 0)
         };
 
-        var m = this;
-        canvas.addEventListener('mousemove', function (e) {
+        this.Point = function(clientX, clientY){
             var rect = canvas.getBoundingClientRect(); // abs. size of element
             var scaleX = canvas.width / rect.width;    // relationship bitmap vs. element for x
             var scaleY = canvas.height / rect.height;  // relationship bitmap vs. element for y
-            var tile = 32;
-            
-            m.selected.x = ((e.clientX - rect.left)*scaleX)*MAP.scale;
-            m.selected.y = ((e.clientY - rect.top)*scaleY)*MAP.scale;
+            var tile = 1;
+            var htile = 0;
+            if(m.selected.obj.s){
+                var tile = 32;
+                var htile = 16;                
+            }
+            var x = ((clientX - rect.left)*scaleX)*MAP.scale;
+            var y = ((clientY - rect.top)*scaleY)*MAP.scale;
 
-            m.selected.x = ((parseInt(m.selected.x/32)*32)+16)-m.offset.x%32;
-            m.selected.y = ((parseInt(m.selected.y/32)*32)+16)-m.offset.y%32;
-            /*
-            m.selected.x = ((e.clientX - rect.left)*scaleX)
-                *MAP.scale;
-            m.selected.y = ((e.clientY - rect.top)*scaleY)
-                *MAP.scale;
-            */    
+            x = ((parseInt(x / tile)*tile)+htile) - m.offset.x % tile;
+            y = ((parseInt(y / tile)*tile)+htile) - m.offset.y % tile;
+
+            return {x:x, y:y};
+        }
+
+        var m = this;
+
+        canvas.addEventListener('mousemove', function (e) {
+            var pt = m.Point(e.clientX, e.clientY);
+            m.selected.x = pt.x;
+            m.selected.y = pt.y;  
          });
 
          canvas.addEventListener('mouseup', function (e) {
             if(Input.IsDown('Delete')){
                 var found = m.gameObjects.Select(m.selected.x+m.offset.x, m.selected.y+m.offset.y);
-                m.gameObjects.Delete(found);
+                m.gameObjects.Delete(found);  
+
+                var col = parseInt((m.selected.x+m.offset.x)/32);
+                var row = parseInt((m.selected.y+m.offset.y)/32);
+
+                for (var i = 0; i < found.tiles.length; i++) {
+                    col = found.tiles[i];
+                    MAP.mapData[row][col] = 0;
+                }
+                MAP.TileInit();
             }
             else{
                 var obj = GAMEOBJ[m.selected.index];
 
-                var b = BlockFactory.Create(obj.src, m.selected.x, m.selected.y, m.offset,
-                    m.selected.mass, m.selected.fric, m.selected.rest);
+                var b = BlockFactory.Create(obj.id, m.selected.x, m.selected.y, m.selected.r, m.offset);
                 m.gameObjects.Add(b);
             }
          });
 
-         var objects =[];//{src:'block32', x:524, y:752},{src:'brick32', x:240, y:752},{src:'brick32', x:272, y:720},{src:'brick32', x:304, y:720},{src:'brick32', x:336, y:720},{src:'brick32', x:368, y:720},{src:'brick32', x:400, y:720},{src:'brick32', x:432, y:720},{src:'brick32', x:432, y:688},{src:'brick32', x:464, y:688},{src:'brick32', x:496, y:688},{src:'brick32', x:528, y:688},{src:'brick32', x:560, y:688},{src:'brick32', x:592, y:688},{src:'brick32', x:624, y:688},{src:'brick32', x:702, y:688},{src:'brick32', x:734, y:688},{src:'brick32', x:766, y:688},{src:'brick32', x:862, y:688},{src:'brick32', x:926, y:688},{src:'brick32', x:894, y:688},{src:'brick32', x:1072, y:688}]
-
         for (var i = 0; i < objects.length; i++) {
-            var obj = objects[i];
+            for (var j = 0; j < objects[i].i.length; j++) {
+                var id = objects[i].id;
+                var obj = objects[i].i[j];
 
-            var b= BlockFactory.Create(obj.src, obj.x, obj.y, this.offset);
-            this.gameObjects.Add(b);
+                var b = BlockFactory.Create(id, obj.x, obj.y, obj.r || 0, this.offset);
+                this.gameObjects.Add(b);
+            }
         }
     }
 
@@ -67,16 +82,14 @@ class Editor{
     {   
         //object select
         if(Input.IsSingle(',')){
-            if(this.selected.index > 0)
+            if(this.selected.index > 4)
             {
                 this.selected.index--;
 
                 var ass = GAMEOBJ[this.selected.index];
                 this.selected.src = SPRITES.Get(ass.src, 0);
-                this.selected.mass = ass.d;
-                this.selected.fric = ass.f;
-                this.selected.rest = ass.r;
-
+                this.selected.obj = ass;
+                this.selected.r = 0;
             }
         }
         if(Input.IsSingle('.')){
@@ -86,73 +99,66 @@ class Editor{
 
                 var ass = GAMEOBJ[this.selected.index];
                 this.selected.src = SPRITES.Get(ass.src, 0);
-                this.selected.mass = ass.d;
-                this.selected.fric = ass.f;
-                this.selected.rest = ass.r;
+                this.selected.obj = ass;
+                this.selected.r = 0;
             }
         }
-
-        //
+        
+        //rotate
         if(Input.IsSingle('Insert')){
-            this.selected.mass++;
+            this.selected.r += 0.785;//1.57;//1.5707864466210615
         }
         if(Input.IsSingle('Delete')){
-            if(this.selected.mass>0){
-                this.selected.mass--;
-            }
-        }
-
-        if(Input.IsSingle('Home')){
-            if(this.selected.fric < 1){
-                this.selected.fric = this.NormalFloat(this.selected.fric+0.1);
-            }
-        }        
-        if(Input.IsSingle('End')){
-            if(this.selected.fric>0){
-                this.selected.fric = this.NormalFloat(this.selected.fric-0.1);
-            }
-        }
-
-        if(Input.IsSingle('PageUp')){
-            if(this.selected.rest < 1){
-                this.selected.rest = this.NormalFloat(this.selected.rest+0.1);
-            }
-        }
-        if(Input.IsSingle('PageDown')){
-            if(this.selected.rest>0){
-                this.selected.rest = this.NormalFloat(this.selected.rest-0.1);
-            }
+            this.selected.r -= 0.785;//1.57;
         }
 
         if(Input.IsSingle('p')){
             var objects = this.gameObjects.Get();
+            var objs = [];
             var m = MAP.mapData;
-            var p = "var obj =[";
+
             for (var i = 0; i < objects.length; i++) {
                 if(objects[i].type != C.ASSETS.GROUND && 
                     objects[i].type != C.ASSETS.WALL &&
-                    objects[i].bodySrc != 'player')
+                    objects[i].type != C.ASSETS.PLATFORM &&
+                    objects[i].type != C.ASSETS.PLAYER)
                 {
-                    if(objects[i].bodySrc != 'brick16' || objects[i].bodySrc != 'brick32'){
+                    if(objects[i].isStatic){
                         var col = parseInt(objects[i].C.x/32);
                         var row = parseInt(objects[i].C.y/32);
-                        m[row][col] = 2;
+                        m[row][col] = objects[i].spriteId;
                     }
                     else{
-                        p += "{";
-                        p += "src:'" + objects[i].bodySrc + "'";
-                        p += ", x:" + parseInt(objects[i].C.x);
-                        p += ", y:" + parseInt(objects[i].C.y);
-                        p += "}";
-                        if(i != objects.length-1){
-                            p += ",";
-                        } 
+                        objs.push({
+                            id:objects[i].spriteId, 
+                            x:parseInt(objects[i].C.x), 
+                            r:objects[i].G,
+                            y:parseInt(objects[i].C.y)});
                     }
-
                 }
+            }            
+
+            const groupBy = (x,f)=>x.reduce(
+                (a,b,i)=>( (a[f(b,i,x)]||=[]).push(b),a ),{});
+            var gr = groupBy(objs, o => o.id);
+
+            var p = "objects:[";
+            for (var key in gr){
+                var value = gr[key];
+                p += "{id:"+key+",i:[";
+                for (var i = 0; i < value.length; i++) {
+                    p += "{";
+                    p += "x:" + parseInt(value[i].x);
+                    p += ", y:" + parseInt(value[i].y);
+                    p += ", r:" + value[i].r.toFixed(3);;
+                    p += "}";
+                    if(i != value.length-1){ 
+                        p += ",";
+                    } 
+                }
+                p += "]},";
             }
-            p += "]";
-            console.log(p);
+            p += "]";            
 
             var mp = "";
             var last = -1;
@@ -183,13 +189,12 @@ class Editor{
             else{
                 mp += "" + last + "|";
             }
+            console.log(p);
             console.log(mp);
         }
 
         DEBUG.Print("ID",this.selected.index);
-        DEBUG.Print("D",this.selected.mass.toFixed(1));
-        DEBUG.Print("F",this.selected.fric.toFixed(1));
-        DEBUG.Print("R",this.selected.rest.toFixed(1));
+        DEBUG.Print("R`",this.selected.r);
         DEBUG.Print("OX",this.offset.x);
         DEBUG.Print("OY",this.offset.y);
     }
@@ -198,6 +203,6 @@ class Editor{
     {
         this.offset.x = x;
         this.offset.y = y;
-        GFX.Sprite(this.selected.x, this.selected.y, this.selected.src, 1, 0);
+        GFX.Sprite(this.selected.x, this.selected.y, this.selected.src, 1, this.selected.r);
     }
 }

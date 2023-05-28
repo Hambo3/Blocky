@@ -150,31 +150,41 @@ var Util = {
         }
         return mapArr;
     },
-    UnpackWorldObjects: function(m){
+    UnpackWorldObjects: function(m, o){
         var objs = [];
         for (var r = 0; r < m.length; r++) {
-            var last = -1;
+            var last = {};
             var l = 0;
             for (var c = 0; c < m[r].length; c++) {
-                if(m[r][c] == 2)// && (last == -1 || last == m[r][c]))
+                var sp = GAMEOBJ[m[r][c]];
+                if(sp.s)
                 {
                     l++;
                 }
-                else{                    
-                    if(last == 2)
+                else
+                {                    
+                    if(last.s)
                     {
                         objs.push({x:c-l,y:r,w:l});
                     }
                     l = 0;
                 }
 
-                last = m[r][c];
+                last = sp;//m[r][c];
             }
         }
-        if(l>0){
+        if(l > 0){
             objs.push({x:c-l,y:r-1,w:l});
         }
-        //console.table(objs);
+
+        for (var i = 0; i < objs.length; i++) {
+            var t = [];
+            for (var c = 0; c < objs[i].w; c++) {
+                t.push(objs[i].x+c);
+            }
+            objs[i].t = t;
+        }
+
         return objs;
     },
     Unpack: function(zip){

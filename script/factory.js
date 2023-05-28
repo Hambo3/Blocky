@@ -6,7 +6,8 @@ var C = {
         WALL:3,
         GROUND:4,
         PLAYER:5,
-        SHOT:6
+        SHOT:6,
+        PLATFORM:7
     },   
     GAMEMODE:
     {
@@ -21,9 +22,23 @@ var C = {
 }
 
 var GAMEOBJ = [
+    {id:0,col:"#999"},{id:1,col:"#333"},{id:2,col:"#555"},
     {
+        id:3,
+        src:'player',
+        s:0,
+        t:C.ASSETS.BLOCK,
+        w:32,
+        h:32,
+        d:2,
+        f:0,
+        r:0
+    },
+    {
+        id:4,
         src:'block16',
-        t:2,
+        s:0,
+        t:C.ASSETS.BLOCK,
         w:16,
         h:16,
         d:16,
@@ -31,8 +46,10 @@ var GAMEOBJ = [
         r:0.2
     },
     {
+        id:5,
         src:'block32',
-        t:2,
+        s:0,
+        t:C.ASSETS.BLOCK,
         w:32,
         h:32,
         d:16,
@@ -40,17 +57,10 @@ var GAMEOBJ = [
         r:0.2
     },
     {
-        src:'brick16',
-        t:2,
-        w:16,
-        h:16,
-        d:0,
-        f:0.2,
-        r:0.2
-    },
-    {
+        id:6,
         src:'brick32',
-        t:2,
+        s:1,
+        t:C.ASSETS.BLOCK,
         w:32,
         h:32,
         d:0,
@@ -58,8 +68,10 @@ var GAMEOBJ = [
         r:0.2
     },
     {
+        id:7,
         src:'box16',
-        t:2,
+        s:0,
+        t:C.ASSETS.BLOCK,
         w:16,
         h:16,
         d:8,
@@ -67,8 +79,10 @@ var GAMEOBJ = [
         r:0.2
     },
     {
+        id:8,
         src:'box32',
-        t:2,
+        s:0,
+        t:C.ASSETS.BLOCK,
         w:32,
         h:32,
         d:8,
@@ -76,8 +90,10 @@ var GAMEOBJ = [
         r:0.2
     },
     {
+        id:9,
         src:'brick10h',
-        t:2,
+        s:0,
+        t:C.ASSETS.BLOCK,
         w:160,
         h:16,
         d:16,
@@ -85,8 +101,10 @@ var GAMEOBJ = [
         r:0.2
     },
     {
+        id:10,
         src:'ball16',
-        t:1,
+        s:0,
+        t:C.ASSETS.BALL,
         w:8,
         h:8,
         d:8,
@@ -94,15 +112,56 @@ var GAMEOBJ = [
         r:0.8
     },
     {
+        id:11,
         src:'ball32',
-        t:1,
+        s:0,
+        t:C.ASSETS.BALL,
         w:16,
         h:16,
         d:8,
         f:0.8,
         r:0.8
+    },
+    {
+        id:12,
+        src:'ground32',
+        s:1,
+        t:C.ASSETS.BLOCK,
+        w:32,
+        h:32,
+        d:0,
+        f:0.2,
+        r:0.2
     }
 ];
+
+class BlockFactory
+{
+    static Create(id, x, y, r, offset)
+    {
+        var obj = GAMEOBJ.find(o=>o.id == id);
+
+        if(obj){
+            var b =null;
+            if(obj.t==C.ASSETS.BALL){
+                b =  new Circle(obj.t, obj.id, 
+                    new Vector2(x+offset.x, y+offset.y), 
+                    obj.w, obj.d, obj.f, obj.r, obj.s);
+            }
+            else{
+                b = new Rectangle(obj.t, obj.id, 
+                    new Vector2(x+offset.x, y+offset.y), 
+                    obj.w, obj.h, 
+                    obj.d, 
+                    obj.f, 
+                    obj.r, obj.s);  
+            }
+
+            PHYSICS.rotateShape(b, r);
+            return b;
+        }
+    }
+}
 
 var FONT = {    
     'A': [
@@ -423,30 +482,3 @@ var FONT = {
     '|':
     []  //CR
 };
-
-
-class BlockFactory
-{
-    static Create(id, x, y, offset, d,f,r)
-    {
-        var obj = GAMEOBJ.find(o=>o.src == id);
-
-        if(obj){
-            if(obj.t==C.ASSETS.BALL){
-                return new Circle(obj.t, id, 
-                    new Vector2(x+offset.x, y+offset.y), 
-                    obj.w, d||obj.d, f||obj.f, r||obj.r, "X");
-            }
-            else{
-                return new Rectangle(obj.t, id, 
-                    new Vector2(x+offset.x, y+offset.y), 
-                    obj.w, obj.h, 
-                    d!=null ? d : obj.d, 
-                    f != null ? f : obj.f, 
-                    r != null ? r : obj.r, "X");
-            }
-        }
-
-
-    }
-}

@@ -1,6 +1,6 @@
 class Blocky{
 
-    constructor(canvas)
+    constructor(canvas, objects)
     {
 
         this.offset;
@@ -11,19 +11,34 @@ class Blocky{
         this.mGravity = new Vector2(0, 100);
 
         this.plr = new Player( Input,
-                new Vector2(12.5*32, 6*32), 32, 32, 2, 0, 0, "BOB");
+                new Vector2(12.5*32, 6*32), 32, 32, 2, 0, 0);
         this.gameObjects.Add(this.plr);
 
-        this.gameObjects.Add(new Rectangle(C.ASSETS.GROUND, 'brick10h', 
-            new Vector2(18.5*32, (24*32)+4), 37*32, 8, 0, 1, 0, "GRD"));
-        this.gameObjects.Add(new Rectangle(C.ASSETS.WALL, 'brick10v', 
-            new Vector2(-4, 12*32), 8, 24*32, 0, 0.2, .2, "WL"));
-        this.gameObjects.Add(new Rectangle(C.ASSETS.WALL, 'brick10v', 
-            new Vector2((37*32)+4, 12*32), 8, 24*32, 0, 0.2, .2, "WR"));
+        this.gameObjects.Add(
+            new StaticBody([],C.ASSETS.GROUND, 
+                new Vector2(18.5*32, (24*32)+16), 37*32, 32, 0, 0.2, .2)
+            );
+        this.gameObjects.Add(
+            new StaticBody([],C.ASSETS.WALL, 
+                new Vector2(-16, 12*32), 32, 24*32, 0, 0.2, .2)
+            );
+        this.gameObjects.Add(
+            new StaticBody([],C.ASSETS.WALL, 
+                new Vector2((37*32)+16, 12*32), 32, 24*32, 0, 0.2, .2)
+            );
         
-        this.blocks = Util.UnpackWorldObjects(MAP.mapData);
+        var blocks = Util.UnpackWorldObjects(MAP.mapData);
 
-        this.editor = new Editor(canvas, this.gameObjects);        
+        for (var i = 0; i < blocks.length; i++) 
+        {
+            var b = blocks[i];
+            var w = b.w*32;
+            var s = new StaticBody(b.t, C.ASSETS.PLATFORM, 
+                new Vector2((b.x*32)+w/2, (b.y*32)+16), w, 32, 0, 0.2, .2); 
+            this.gameObjects.Add(s);
+        }
+
+        this.editor = new Editor(canvas, this.gameObjects, objects);        
     }
 
     AddObject(x, y, V){
